@@ -1,13 +1,31 @@
 # NovaTab 项目交接文档
 
 > 统一、可定制、纯本地的新建标签页浏览器扩展（Chrome / Edge）
-> 当前版本：v0.5.3 ｜ 最后更新：2026-08-25
+> 当前版本：v0.6.0 ｜ 最后更新：2026-08-25
+> GitHub 仓库：https://github.com/PoesisQ/NovaTab （分支 `main`）
+
+---
+
+## 0. 给 AI Agent / 接班者的三分钟速读
+
+1. 入口：`src/entrypoints/newtab/`（App.vue 组装一切，style.css 集中全部样式）
+2. 设置类型与默认值：`src/types/settings.ts`（改设置先动这里，`normalizeSettings` 自动兼容旧数据）
+3. 功能清单与权限：`src/core/featureRegistry.ts`（设置面板的开关列表据此自动生成）
+4. 图标：`src/components/Icon.vue`（12 个白描 SVG，新增图标改 `IconName` 联合类型）
+5. 改完必做三步：`npm run compile`（零错误）→ `npm run build` → `npm run sync:win`，并同步改 `package.json` 的 version
 
 ---
 
 ## 1. 项目概览
 
 NovaTab 是一个替换浏览器"新建标签页"的 MV3 扩展，一套代码同时支持 Chrome 与 Edge（未来可扩展 Firefox）。所有功能均可开关、可调参；数据默认全部保存在本机浏览器内，无遥测、无广告、无账户。
+
+**页面布局**
+
+- 左上角：图标坞（收藏夹 / 历史 / 下载）——白描图标裸放，悬停展开面板，点击直达浏览器对应页面
+- 右上角：6 个浏览器入口白描图标（设置 / 历史 / 下载 / 扩展 / 书签 / 密码）
+- 中部：白色极简搜索框 → 常用网址行（黑圆底图标 + 可编辑名称）→ 待办宽条（位置 / 深浅主题可选）
+- 左下角：行楷字体自定义问候语；右下角：白描齿轮设置按钮
 
 **核心特性**
 
@@ -17,9 +35,9 @@ NovaTab 是一个替换浏览器"新建标签页"的 MV3 扩展，一套代码�
 | 搜索 | 多引擎（Google/Bing/百度/DuckDuckGo/自定义 `%s` 模板）；建议词、搜索历史、最常搜索各自可开关 |
 | 收藏夹 | 左上角图标悬停展开；可选起始根文件夹；只显示文件夹或直接铺开内容；可删除 |
 | 常用网址 | 搜索栏与待办之间的一排图标（黑圆底 + 网站图标 + 可编辑名称），可手动添加固定 |
-| 待办 | 宽条列表（居中/左 1/3/右 1/3 可选；深/浅色主题）；最多显示 5 条、悬停滚轮滚动；可设日期时间；📋 管理面板（增/删/排序/备注）；可选浏览器账号云同步 |
+| 待办 | 宽条列表（居中/左 1/3/右 1/3 可选；深/浅色主题）；最多显示 5 条、悬停滚轮滚动；可设日期时间；管理面板（增/删/排序/备注）；可选浏览器账号云同步 |
 | 历史 / 下载 | 左上角图标悬停查看；点击直达浏览器对应页面 |
-| 其他 | 右上角 6 个浏览器入口纯图标；左下角行楷问候语；右下角设置齿轮；配置导出/导入 |
+| 其他 | 全套白描 SVG 图标；苹果风深色美学；丝滑动效；配置导出/导入 |
 
 ---
 
@@ -52,11 +70,11 @@ wxt（构建框架，负责多浏览器清单/打包）
 | `npm run build` | 生产构建 → `.output/chrome-mv3/` |
 | `npm run sync:win` | 把构建产物复制到 Windows 可见目录 `C:\Users\<用户>\NovaTab` |
 | `npm run zip` | 打 zip 包 |
-| `npm run compile` | vue-tsc 类型检查（零错误为准） |
+| `npm run compile` | vue-tsc 类型检查（以零错误为准） |
 
 ---
 
-## 3. 项目文件结构（逐文件职责）
+## 3. 项目文件结构（逐文件职责，共约 2957 行）
 
 ```
 novatab/
@@ -64,7 +82,7 @@ novatab/
 ├── package-lock.json         # 依赖锁定
 ├── tsconfig.json             # 继承 .wxt/tsconfig.json 的 TS 配置
 ├── wxt.config.ts             # WXT 配置：srcDir、manifest 权限清单
-├── README.md                 # 安装/使用说明（面向用户）
+├── README.md                 # GitHub 项目主页（面向用户）
 ├── HANDOVER.md               # 本交接文档
 ├── .gitignore
 ├── scripts/
@@ -75,7 +93,7 @@ novatab/
     │       ├── index.html    # 页面骨架（#app + main.ts）
     │       ├── main.ts       # 启动：载入存储 → 挂载 App
     │       ├── App.vue       # 根组件：壁纸层/搜索/常用网址/待办/四角组件/设置面板的组装
-    │       └── style.css     # 全部样式（666 行，苹果深色美学 + 动效）
+    │       └── style.css     # 全部样式（667 行，苹果深色美学 + 动效）
     ├── types/
     │   └── settings.ts       # 全部设置的 TypeScript 类型 + 默认值 + normalizeSettings
     ├── core/                 # 无 UI 的核心逻辑层
@@ -91,15 +109,16 @@ novatab/
     │   ├── toast.ts          # 全局轻提示
     │   └── utils.ts          # favicon URL（_favicon 接口）、时间/大小/日期格式化
     └── components/           # UI 组件层
+        ├── Icon.vue          # 白描 SVG 图标组件（12 个：star/clock/download/settings/grid/key/list/plus/folder/file/folder-open/search）
         ├── WallpaperLayer.vue# 壁纸渲染层：渐变/图片、缩放位移、暗角/噪点等效果
         ├── SearchBar.vue     # 搜索框：引擎切换、建议词、历史、最常搜索、键盘导航
-        ├── QuickLinksBar.vue # 常用网址行：图标+名称、改名/移除/添加、动画
-        ├── TodoBar.vue       # 待办宽条 + 📋 管理面板（增删排序、日期时间、备注）
+        ├── QuickLinksBar.vue # 常用网址行：黑圆底图标+名称、改名/移除/添加、动画
+        ├── TodoBar.vue       # 待办宽条 + 管理面板（增删排序、日期时间、备注）
         ├── DockPanel.vue     # 左上角图标坞：悬停展开收藏夹/历史/下载面板
         ├── BookmarksCard.vue # 收藏夹列表（根目录选择、逐层下钻、搜索、删除）
         ├── HistoryCard.vue   # 历史记录列表
         ├── DownloadsCard.vue # 下载记录列表（打开文件/所在文件夹）
-        ├── TopBar.vue        # 右上角 6 个浏览器入口纯图标
+        ├── TopBar.vue        # 右上角 6 个浏览器入口白描图标
         ├── CornerGreeting.vue# 左下角行楷问候语
         └── SettingsPanel.vue # 设置面板：功能开关（内嵌细节）、历史与下载、数据、关于
 ```
@@ -111,7 +130,7 @@ novatab/
 ├── manifest.json            # MV3 清单：chrome_url_overrides.newtab、权限
 ├── newtab.html              # 新标签页 HTML（引用下方的 JS/CSS）
 ├── assets/newtab-*.css      # 全部样式（文件名带内容哈希）
-└── chunks/newtab-*.js       # 全部逻辑（Vue 运行时 + 业务代码，约 125KB）
+└── chunks/newtab-*.js       # 全部逻辑（Vue 运行时 + 业务代码，约 129KB）
 ```
 
 ---
@@ -120,7 +139,7 @@ novatab/
 
 | 位置 | Key / 库 | 内容 |
 |---|---|---|
-| `chrome.storage.local` | `settings` | 全部设置（功能开关、壁纸参数、搜索参数、布局等，防抖 200ms 自动保存） |
+| `chrome.storage.local` | `settings` | 全部设置（功能开关、壁纸参数、搜索参数等，防抖 200ms 自动保存） |
 | `chrome.storage.local` | `todos` | 待办列表 + 备注 |
 | `chrome.storage.local` | `searchHistory` | 搜索历史（词、次数、时间，上限 500） |
 | `chrome.storage.sync` | `todosSync` | 待办云同步副本（仅开启"跨设备同步"时写入；Chrome/Edge 各自独立账号云） |
@@ -157,7 +176,7 @@ Windows 能直接访问的是构建产物副本（每次 `npm run sync:win` 自�
 
 ---
 
-## 6. 构建 / 发布 / 更新流程
+## 6. 构建 / 发布 / 更新 / Git 流程
 
 ```bash
 cd /home/poesis/tryout_DSHarness/novatab
@@ -171,7 +190,17 @@ npm run sync:win    # 复制到 C:\Users\y_mai\NovaTab
 2. **关闭所有已打开的新标签页**，再新开一个
 3. 确认版本：右下角 ⚙️ → 「关于与隐私」→ 当前版本（改代码时同步改 `package.json` 的 version）
 
-> 浏览器会缓存已加载扩展的资源；只开新标签页不点 ⟳ 不会生效。仍无效就 `chrome://restart` 或移除重装（移除会清空本地数据，先导出配置）。
+**Git / GitHub（仓库：https://github.com/PoesisQ/NovaTab）**
+
+```bash
+git add -A
+git commit -m "描述：改了什么"     # 改动代码必须同步更新 README.md / HANDOVER.md
+git push origin main
+```
+
+- 推送需要凭据：本机 WSL 无 GCM/SSH，需临时 token（classic + `repo` 权限）或安装 `gh` CLI（`gh auth login`）
+- 提交者身份已在本仓库配置：`PoesisQ <PoesisQ@users.noreply.github.com>`
+- 不要提交：`node_modules/`、`.output/`、`.wxt/`、`.npm-cache/`（已在 .gitignore）
 
 ---
 
@@ -180,10 +209,11 @@ npm run sync:win    # 复制到 C:\Users\y_mai\NovaTab
 | 版本 | 主要变化 |
 |---|---|
 | 0.1.0 | 初版：网格卡片布局（壁纸/搜索/收藏夹/待办/历史/下载/浏览器入口） |
-| 0.2.x | 重排布局：去时钟、左上图标坞 + 右上图标条 + 待办宽条；权限重试；白搜索框 |
-| 0.3.x | 常用网址独立成行；`_favicon` 接口修复网站图标；待办深浅主题；动效 |
-| 0.4.x | 等线 Light→仿宋字体、黑圆底网址图标、设置面板动效 |
-| 0.5.x | 设置面板重构（功能开关内嵌细节、去 emoji、苹果美学）；全局禁选光标；壁纸选择 bug 修复 |
+| 0.2.x | 布局重排：删时间问候、左上图标坞 + 右上入口 + 待办宽条；权限重试；白搜索框；图标去毛玻璃并放大 |
+| 0.3.x | 常用网址独立成行（Chrome 风格）；`_favicon` 接口修复站点图标；待办深浅主题；弹层/待办动效；设置面板折叠分组 |
+| 0.4.x | 待办/设置字体演进（等线 Light → 微软雅黑 UI）；常用网址黑圆底图标 |
+| 0.5.x | 仿宋 + 行楷艺术字体；设置面板重构（功能开关内嵌细节、去 emoji、苹果美学配色）；引擎下拉字号；全局禁选光标；壁纸选择修复 |
+| 0.6.0 | 全部 emoji 替换为统一白描 SVG 图标（新增 Icon.vue 组件） |
 
 ---
 
@@ -195,6 +225,7 @@ npm run sync:win    # 复制到 C:\Users\y_mai\NovaTab
 | 新增权限 | `wxt.config.ts` 的 `permissions`/`optional_permissions` + `featureRegistry.ts` 的功能声明 |
 | 设置项 | `types/settings.ts`（类型+默认值）+ `SettingsPanel.vue`（对应功能的 feature-body） |
 | 样式/配色/动效 | `entrypoints/newtab/style.css`（CSS 变量集中在 `:root`） |
+| 图标 | `components/Icon.vue`（IconName 联合类型 + SVG 模板） |
 | 引擎/建议词 | `core/search.ts`（ENGINES 数组） |
 | 浏览器深链 | `core/browser.ts`（browserPageUrl 映射） |
 
@@ -209,6 +240,7 @@ npm run sync:win    # 复制到 C:\Users\y_mai\NovaTab
 5. **storage.sync 配额**（单项 8KB/总量 100KB）：壁纸绝不能放 sync，待办量大时云同步会失败（静默）。
 6. 设置面板折叠动画用了新版 Chromium 的 `::details-content` 特性，老浏览器自动降级为无动画。
 7. 移除扩展 = 清空本地全部数据（壁纸/待办/搜索历史/设置）；重装后需重新授权并导入配置。
+8. 文档与代码必须同步更新（README.md / HANDOVER.md），避免仓库信息落后。
 
 ---
 
@@ -216,5 +248,6 @@ npm run sync:win    # 复制到 C:\Users\y_mai\NovaTab
 
 - **加新功能卡片类组件**：在 `featureRegistry` 注册 → `DockPanel.vue` 的 `items`/`components` 加图标与组件（或放进 `App.vue` 内容流）→ 设置面板自动出现开关。
 - **新设置项**：`types/settings.ts` 加类型和默认值（`normalizeSettings` 会自动兼容旧数据）→ 面板对应 feature-body 加控件。
+- **新图标**：`Icon.vue` 的 `IconName` 加名字 + `<template v-else-if>` 加 SVG。
 - **跨浏览器**：保持使用 `chrome.*` API + 本项目封装（`core/` 层），避免直接依赖 Chromium 独有行为；上 Firefox 时用 WXT 的 `-b firefox` 目标。
 - **上线商店**：Chrome Web Store 对 NTP 类扩展有专门政策（默认体验必须完整可用、需用途说明），上架前需按政策自查。
