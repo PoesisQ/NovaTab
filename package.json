@@ -1,0 +1,25 @@
+{
+  "name": "novatab",
+  "description": "统一、可定制、纯本地的新建标签页（Chrome / Edge）",
+  "private": true,
+  "version": "0.6.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "compile": "vue-tsc --noEmit",
+    "sync:win": "node scripts/sync-win.mjs",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "vue": "^3.4.38"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "@wxt-dev/module-vue": "^1.0.1",
+    "typescript": "^5.5.4",
+    "vue-tsc": "^2.0.29",
+    "wxt": "^0.19.13"
+  }
+}
