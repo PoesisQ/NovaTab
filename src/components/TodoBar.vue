@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { settings } from '../core/storage';
-import { loadTodos, pushSync, todos } from '../core/todos';
+import { loadTodos, pushSync, todos, type TodoItem } from '../core/todos';
 import Icon from './Icon.vue';
 import { formatDue } from '../core/utils';
 
@@ -9,9 +9,22 @@ const managerOpen = ref(false);
 const newText = ref('');
 const withDue = ref(false);
 const newDue = ref('');
+const editingId = ref<string | null>(null);
+const editingText = ref('');
+
+// 按住左键划过连续标记完成
+let dragging = false;
+const dragToggled = new Set<string>();
 
 onMounted(() => {
   void loadTodos();
+  window.addEventListener('keydown', onWindowKeydown);
+  window.addEventListener('mouseup', onWindowMouseup);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onWindowKeydown);
+  window.removeEventListener('mouseup', onWindowMouseup);
 });
 
 const items = computed(() => {
@@ -56,6 +69,56 @@ function move(id: string, dir: -1 | 1) {
   arr[j] = tmp;
 }
 
+// ---- 单条编辑 ----
+function startEdit(it: TodoItem) {
+  editingId.value = it.id;
+  editingText.value = it.text;
+}
+
+function saveEdit() {
+  if (editingId.value) {
+    const t = editingText.value.trim();
+    const it = todos.state.items.find((i) => i.id === editingId.value);
+    if (it && t) it.text = t;
+  }
+  editingId.value = null;
+}
+
+function cancelEdit() {
+  editingId.value = null;
+}
+
+// ---- 点击 / 按住划过连续完成 ----
+function onStripDown(id: string, e: MouseEvent) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  dragging = true;
+  dragToggled.clear();
+  dragToggled.add(id);
+  toggle(id);
+}
+
+function onStripEnter(id: string) {
+  if (!dragging || dragToggled.has(id)) return;
+  dragToggled.add(id);
+  toggle(id);
+}
+
+function onWindowMouseup() {
+  dragging = false;
+  dragToggled.clear();
+}
+
+// ---- ESC 退出 ----
+function onWindowKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  if (editingId.value) {
+    cancelEdit();
+    return;
+  }
+  if (managerOpen.value) managerOpen.value = false;
+}
+
 watch(
   () => [settings.todos.sync, todos.state.items, todos.state.notes],
   () => {
@@ -74,17 +137,36 @@ watch(
     </div>
 
     <TransitionGroup name="todo" tag="div" class="todo-strips">
-      <div v-for="it in items" :key="it.id" class="todo-strip" :class="{ done: it.done }">
-        <input class="todo-check" type="checkbox" :checked="it.done" @change="toggle(it.id)" />
-        <span class="todo-strip-text" :title="it.text">{{ it.text }}</span>
+      <div
+        v-for="it in items"
+        :key="it.id"
+        class="todo-strip"
+        :class="{ done: it.done, editing: editingId === it.id }"
+        title="点击标记完成；按住左键划过可连续标记"
+        @mousedown="onStripDown(it.id, $event)"
+        @mouseenter="onStripEnter(it.id)"
+      >
+        <input class="todo-check" type="checkbox" :checked="it.done" @mousedown.stop @change="toggle(it.id)" />
+        <input
+          v-if="editingId === it.id"
+          v-model="editingText"
+          class="todo-edit-input"
+          @mousedown.stop
+          @keydown.enter.prevent="saveEdit()"
+          @keydown.esc.prevent="cancelEdit()"
+          @blur="saveEdit()"
+        />
+        <span v-else class="todo-strip-text" :title="it.text">{{ it.text }}</span>
         <span
-          v-if="it.due"
+          v-if="it.due && editingId !== it.id"
           class="todo-due"
           :class="{ overdue: it.due < Date.now() && !it.done }"
         >
           {{ formatDue(it.due) }}
         </span>
-        <button class="mini" title="删除" @click="remove(it.id)">✕</button>
+        <button v-if="editingId === it.id" class="mini" title="保存" @mousedown.stop @click="saveEdit()">✓</button>
+        <button v-else class="mini" title="编辑" @mousedown.stop @click="startEdit(it)">✎</button>
+        <button class="mini" title="删除" @mousedown.stop @click="remove(it.id)">✕</button>
       </div>
     </TransitionGroup>
 

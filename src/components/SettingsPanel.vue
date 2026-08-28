@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { FEATURES, type FeatureDef } from '../core/featureRegistry';
 import { requestPermissions } from '../core/permissions';
 import { settings } from '../core/storage';
@@ -49,6 +49,28 @@ watch(
     }
   }
 );
+
+// ESC：先收起展开的功能细节，再关闭整个设置面板
+function onWindowKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  if (Object.values(expanded).some(Boolean)) {
+    for (const k of Object.keys(expanded)) expanded[k] = false;
+  } else {
+    emit('update:open', false);
+  }
+}
+
+watch(
+  () => props.open,
+  (open) => {
+    if (open) window.addEventListener('keydown', onWindowKeydown);
+    else window.removeEventListener('keydown', onWindowKeydown);
+  }
+);
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onWindowKeydown);
+});
 
 const PRESETS = [
   { name: '深海', from: '#1b2a4a', to: '#0f172a' },

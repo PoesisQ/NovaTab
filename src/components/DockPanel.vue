@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type Component } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
 import { settings } from '../core/storage';
 import { openBrowserPage } from '../core/browser';
 import BookmarksCard from './BookmarksCard.vue';
@@ -44,6 +44,20 @@ function scheduleClose() {
     openId.value = null;
   }, 200);
 }
+
+// ESC 收起展开面板
+function onWindowKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  openId.value = null;
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onWindowKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onWindowKeydown);
+});
 
 async function onIconClick(item: DockItem) {
   cancelClose();

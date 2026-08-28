@@ -1,6 +1,6 @@
 # NovaTab — 统一新标签页
 
-> 当前版本 **v0.6.0** ｜ 仓库 https://github.com/PoesisQ/NovaTab
+> 当前版本 **v0.6.1** ｜ 仓库 https://github.com/PoesisQ/NovaTab
 
 一个现代、极简、**纯本地运行**的新建标签页浏览器扩展（Chrome / Edge）。一套代码、统一体验，所有功能均可开关与定制。
 

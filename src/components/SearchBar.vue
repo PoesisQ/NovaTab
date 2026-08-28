@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { settings } from '../core/storage';
 import { ENGINES, currentEngine, fetchSuggestions, openSearch } from '../core/search';
 import { clearSearchHistory, loadSearchHistory, mostSearched, recentSearches, searchHistory } from '../core/searchHistory';
@@ -20,7 +20,22 @@ let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
 onMounted(() => {
   void loadSearchHistory();
+  window.addEventListener('keydown', onWindowKeydown);
 });
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onWindowKeydown);
+});
+
+// ESC：先关引擎菜单，再关建议面板
+function onWindowKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  if (engineMenu.value) {
+    engineMenu.value = false;
+    return;
+  }
+  if (panelOpen.value) panelOpen.value = false;
+}
 
 const engine = computed(() => currentEngine());
 const historyItems = computed(() => (settings.search.showHistory ? recentSearches(8) : []));
