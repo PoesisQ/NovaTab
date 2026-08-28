@@ -10,7 +10,8 @@
     "zip": "wxt zip",
     "compile": "vue-tsc --noEmit",
     "sync:win": "node scripts/sync-win.mjs",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "release:zip": "python3 scripts/make-release-zip.py"
   },
   "dependencies": {
     "vue": "^3.4.38"

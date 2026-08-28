@@ -202,6 +202,12 @@ git push origin main
 - 提交者身份已在本仓库配置：`PoesisQ <PoesisQ@users.noreply.github.com>`
 - 不要提交：`node_modules/`、`.output/`、`.wxt/`、`.npm-cache/`（已在 .gitignore）
 
+**发布 Release**
+
+1. `npm run build && npm run release:zip` → 生成 `.output/NovaTab-v<版本>.zip`（内含 `NovaTab/` 文件夹，解压即可加载）
+2. 打 tag 并推送：`git tag v<版本> && git push origin v<版本>`
+3. GitHub Releases 页面基于该 tag 创建 Release，上传 zip（需 Contents 写权限的 token）
+
 ---
 
 ## 7. 版本演进
