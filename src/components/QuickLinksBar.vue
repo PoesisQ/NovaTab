@@ -87,6 +87,34 @@ function saveEdit(url: string) {
   }
 }
 
+// ---- 手动排序：◀ ▶ 调整固定项顺序（非固定项点 ◀ 自动转为固定项） ----
+function moveTile(url: string, dir: -1 | 1) {
+  const arr = settings.quickLinks.pins;
+  let idx = arr.findIndex((p) => p.url === url);
+  if (idx < 0) {
+    const site = visible.value.find((s) => s.url === url);
+    if (!site) return;
+    arr.push({ id: crypto.randomUUID(), title: site.title, url });
+    idx = arr.length - 1;
+  }
+  const j = idx + dir;
+  if (j < 0 || j >= arr.length) return;
+  const tmp = arr[idx];
+  arr[idx] = arr[j];
+  arr[j] = tmp;
+}
+
+function canMoveLeft(url: string) {
+  if (!pins.value.length) return false;
+  const idx = pins.value.findIndex((p) => p.url === url);
+  return idx >= 0 ? idx > 0 : true;
+}
+
+function canMoveRight(url: string) {
+  const idx = pins.value.findIndex((p) => p.url === url);
+  return idx >= 0 && idx < pins.value.length - 1;
+}
+
 function onFaviconError(e: Event) {
   const img = e.target as HTMLImageElement;
   img.style.display = 'none';
@@ -122,6 +150,8 @@ function onFaviconError(e: Event) {
           />
           <span v-else class="ql-name" :title="s.title" @click.prevent="startEdit(s.url, s.title)">{{ s.title }}</span>
           <span class="ql-tile-actions" @click.prevent>
+            <button v-if="canMoveLeft(s.url)" class="ql-tile-action" title="左移" @click="moveTile(s.url, -1)">◀</button>
+            <button v-if="canMoveRight(s.url)" class="ql-tile-action" title="右移" @click="moveTile(s.url, 1)">▶</button>
             <button class="ql-tile-action" title="编辑名称" @click="startEdit(s.url, s.title)">✎</button>
             <button v-if="pinFor(s.url)" class="ql-tile-action" title="移除固定" @click="removePin(pinFor(s.url)?.id ?? '')">✕</button>
           </span>

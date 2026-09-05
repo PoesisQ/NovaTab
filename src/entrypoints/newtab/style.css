@@ -437,6 +437,7 @@ a.bm-item:hover, a.ql-item:hover, button.bm-item:hover { background: var(--surfa
 .tile-enter-active, .tile-leave-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .tile-enter-from { opacity: 0; transform: translateY(-6px) scale(0.94); }
 .tile-leave-to { opacity: 0; transform: scale(0.94); }
+.tile-move { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
 /* ---------- 待办亮色主题（奶白灰，低亮度） ---------- */
 .todo-light .todo-strip { background: #d8dde6; border-color: rgba(15, 23, 42, 0.1); }
