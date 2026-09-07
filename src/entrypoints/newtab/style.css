@@ -697,9 +697,3 @@ input[type="color"] { width: 44px; height: 30px; border: 1px solid var(--line); 
 .ql-drag-handle:active { cursor: grabbing; }
 .ql-pin-row.drag-over { background: rgb(10 132 255 / 0.18); }
 .ql-pin-row.dragging { opacity: 0.4; }
-.ql-tile.drag-over .ql-tile-ico {
-  transform: scale(1.12) translateY(-2px);
-  border-color: rgb(10 132 255 / 0.7);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 0 3px rgb(10 132 255 / 0.25);
-}
-.ql-tile.dragging { opacity: 0.4; }
