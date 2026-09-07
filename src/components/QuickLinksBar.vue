@@ -5,33 +5,38 @@ import { onPermissionsAdded, requestPermissions } from '../core/permissions';
 import { settings } from '../core/storage';
 import { favicon } from '../core/utils';
 
-interface Site {
-  title: string;
-  url: string;
-}
-
-const sites = ref<Site[]>([]);
 const adding = ref(false);
 const addTitle = ref('');
 const addUrl = ref('');
 let offPermissionAdded: (() => void) | undefined;
 
-async function loadSites() {
+// 首次加载：把浏览器"最常访问"并入手动列表，之后列表完全由用户管理
+async function loadAndSeed() {
   const ok = await requestPermissions(featureMap.quicklinks);
   if (!ok) return;
   try {
-    sites.value = (await chrome.topSites.get()).map((s) => ({ title: s.title, url: s.url }));
+    const sites = await chrome.topSites.get();
+    if (!settings.quickLinks.seeded) {
+      const urls = new Set(settings.quickLinks.pins.map((p) => p.url));
+      for (const s of sites) {
+        if (!urls.has(s.url)) {
+          settings.quickLinks.pins.push({ id: crypto.randomUUID(), title: s.title, url: s.url });
+          urls.add(s.url);
+        }
+      }
+      settings.quickLinks.seeded = true;
+    }
   } catch {
-    sites.value = [];
+    /* ignore */
   }
 }
 
 function onPermissionAdded(perms: chrome.permissions.Permissions) {
-  if (perms.permissions?.includes('topSites')) void loadSites();
+  if (perms.permissions?.includes('topSites')) void loadAndSeed();
 }
 
 onMounted(() => {
-  void loadSites();
+  void loadAndSeed();
   offPermissionAdded = onPermissionsAdded(onPermissionAdded);
 });
 
@@ -39,17 +44,7 @@ onUnmounted(() => {
   offPermissionAdded?.();
 });
 
-const pins = computed(() => settings.quickLinks.pins);
-const hiddenUrls = computed(() => new Set(settings.quickLinks.hidden.map((h) => h.url)));
-
-const visible = computed(() => {
-  const urls = new Set(pins.value.map((p) => p.url));
-  const merged = [
-    ...pins.value,
-    ...sites.value.filter((s) => !urls.has(s.url) && !hiddenUrls.value.has(s.url))
-  ];
-  return merged.slice(0, settings.quickLinks.maxItems);
-});
+const visible = computed(() => settings.quickLinks.pins.slice(0, settings.quickLinks.maxItems));
 
 function addPin() {
   const title = addTitle.value.trim();
@@ -65,16 +60,10 @@ function addPin() {
 // ✕ = 真正移除（进入隐藏名单，可到设置 → 常用网址 → 已隐藏的网址 中恢复）
 function removeTile(url: string) {
   const i = settings.quickLinks.pins.findIndex((p) => p.url === url);
-  let title = url;
-  if (i >= 0) {
-    title = settings.quickLinks.pins[i].title;
-    settings.quickLinks.pins.splice(i, 1);
-  } else {
-    const s = visible.value.find((x) => x.url === url);
-    if (s) title = s.title;
-  }
+  if (i < 0) return;
+  const [p] = settings.quickLinks.pins.splice(i, 1);
   if (!settings.quickLinks.hidden.some((h) => h.url === url)) {
-    settings.quickLinks.hidden.push({ url, title });
+    settings.quickLinks.hidden.push({ url, title: p.title });
   }
 }
 

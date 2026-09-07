@@ -64,6 +64,7 @@ export interface QuickLinksSettings {
   maxItems: number;
   pins: QuickLink[];
   hidden: QuickLinkHidden[];
+  seeded: boolean; // 是否已把浏览器最常访问并入手动列表
 }
 
 export interface TodoSettings {
@@ -149,7 +150,7 @@ export const DEFAULT_SETTINGS: Settings = {
     openIn: 'newtab'
   },
   bookmarks: { showContents: false, maxItems: 30, rootId: '' },
-  quickLinks: { maxItems: 12, pins: [], hidden: [] },
+  quickLinks: { maxItems: 12, pins: [], hidden: [], seeded: false },
   todos: { sync: false, showDone: false, position: 'center', theme: 'dark' },
   history: { maxItems: 10 },
   downloads: { maxItems: 8 },
