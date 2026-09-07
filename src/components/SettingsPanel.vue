@@ -265,8 +265,11 @@ function onFaviconError(e: Event) {
 const dragUrl = ref<string | null>(null);
 const dragOverUrl = ref<string | null>(null);
 
+let lastDragTarget: string | null = null;
+
 function onDragStart(e: DragEvent, url: string) {
   dragUrl.value = url;
+  lastDragTarget = null;
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', url);
@@ -276,30 +279,37 @@ function onDragStart(e: DragEvent, url: string) {
 function onDragEnd() {
   dragUrl.value = null;
   dragOverUrl.value = null;
+  lastDragTarget = null;
+}
+
+function reorderItem(src: string, target: string) {
+  const arr = settings.quickLinks.pins;
+  const from = arr.findIndex((p) => p.url === src);
+  const to = arr.findIndex((p) => p.url === target);
+  if (from < 0 || to < 0) return;
+  const [item] = arr.splice(from, 1);
+  arr.splice(to, 0, item);
 }
 
 function onRowDragOver(e: DragEvent, url: string) {
   e.preventDefault();
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
   dragOverUrl.value = url;
+  const src = dragUrl.value;
+  if (!src || src === url || lastDragTarget === url) return;
+  lastDragTarget = url;
+  reorderItem(src, url); // 拖住即实时让位，无需松手
 }
 
 function clearDragOver() {
   dragOverUrl.value = null;
 }
 
-function onDrop(e: DragEvent, targetUrl: string) {
+function onDrop(e: DragEvent, _targetUrl: string) {
   e.preventDefault();
-  const src = dragUrl.value ?? e.dataTransfer?.getData('text/plain');
   dragUrl.value = null;
   dragOverUrl.value = null;
-  if (!src || src === targetUrl) return;
-  const arr = settings.quickLinks.pins;
-  const from = arr.findIndex((p) => p.url === src);
-  const to = arr.findIndex((p) => p.url === targetUrl);
-  if (from < 0 || to < 0) return;
-  const [item] = arr.splice(from, 1);
-  arr.splice(to, 0, item);
+  lastDragTarget = null;
 }
 </script>
 
