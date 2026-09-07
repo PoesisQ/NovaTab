@@ -55,9 +55,15 @@ export interface QuickLink {
   url: string;
 }
 
+export interface QuickLinkHidden {
+  url: string;
+  title: string;
+}
+
 export interface QuickLinksSettings {
   maxItems: number;
   pins: QuickLink[];
+  hidden: QuickLinkHidden[];
 }
 
 export interface TodoSettings {
@@ -143,7 +149,7 @@ export const DEFAULT_SETTINGS: Settings = {
     openIn: 'newtab'
   },
   bookmarks: { showContents: false, maxItems: 30, rootId: '' },
-  quickLinks: { maxItems: 12, pins: [] },
+  quickLinks: { maxItems: 12, pins: [], hidden: [] },
   todos: { sync: false, showDone: false, position: 'center', theme: 'dark' },
   history: { maxItems: 10 },
   downloads: { maxItems: 8 },

@@ -14,8 +14,6 @@ const sites = ref<Site[]>([]);
 const adding = ref(false);
 const addTitle = ref('');
 const addUrl = ref('');
-const editingId = ref<string | null>(null);
-const editingTitle = ref('');
 let offPermissionAdded: (() => void) | undefined;
 
 async function loadSites() {
@@ -42,16 +40,16 @@ onUnmounted(() => {
 });
 
 const pins = computed(() => settings.quickLinks.pins);
+const hiddenUrls = computed(() => new Set(settings.quickLinks.hidden.map((h) => h.url)));
 
 const visible = computed(() => {
   const urls = new Set(pins.value.map((p) => p.url));
-  const merged = [...pins.value, ...sites.value.filter((s) => !urls.has(s.url))];
+  const merged = [
+    ...pins.value,
+    ...sites.value.filter((s) => !urls.has(s.url) && !hiddenUrls.value.has(s.url))
+  ];
   return merged.slice(0, settings.quickLinks.maxItems);
 });
-
-function pinFor(url: string) {
-  return pins.value.find((p) => p.url === url);
-}
 
 function addPin() {
   const title = addTitle.value.trim();
@@ -64,55 +62,20 @@ function addPin() {
   adding.value = false;
 }
 
-function removePin(id: string) {
-  const i = settings.quickLinks.pins.findIndex((p) => p.id === id);
-  if (i >= 0) settings.quickLinks.pins.splice(i, 1);
-}
-
-function startEdit(url: string, current: string) {
-  editingId.value = url;
-  editingTitle.value = current;
-}
-
-function saveEdit(url: string) {
-  const t = editingTitle.value.trim();
-  editingId.value = null;
-  if (!t) return;
-  const pin = pins.value.find((p) => p.url === url);
-  if (pin) {
-    pin.title = t;
+// ✕ = 真正移除（进入隐藏名单，可到设置 → 常用网址 → 已隐藏的网址 中恢复）
+function removeTile(url: string) {
+  const i = settings.quickLinks.pins.findIndex((p) => p.url === url);
+  let title = url;
+  if (i >= 0) {
+    title = settings.quickLinks.pins[i].title;
+    settings.quickLinks.pins.splice(i, 1);
   } else {
-    // 编辑常用网站的标题时，自动转为固定项
-    settings.quickLinks.pins.push({ id: crypto.randomUUID(), title: t, url });
+    const s = visible.value.find((x) => x.url === url);
+    if (s) title = s.title;
   }
-}
-
-// ---- 手动排序：◀ ▶ 调整固定项顺序（非固定项点 ◀ 自动转为固定项） ----
-function moveTile(url: string, dir: -1 | 1) {
-  const arr = settings.quickLinks.pins;
-  let idx = arr.findIndex((p) => p.url === url);
-  if (idx < 0) {
-    const site = visible.value.find((s) => s.url === url);
-    if (!site) return;
-    arr.push({ id: crypto.randomUUID(), title: site.title, url });
-    idx = arr.length - 1;
+  if (!settings.quickLinks.hidden.some((h) => h.url === url)) {
+    settings.quickLinks.hidden.push({ url, title });
   }
-  const j = idx + dir;
-  if (j < 0 || j >= arr.length) return;
-  const tmp = arr[idx];
-  arr[idx] = arr[j];
-  arr[j] = tmp;
-}
-
-function canMoveLeft(url: string) {
-  if (!pins.value.length) return false;
-  const idx = pins.value.findIndex((p) => p.url === url);
-  return idx >= 0 ? idx > 0 : true;
-}
-
-function canMoveRight(url: string) {
-  const idx = pins.value.findIndex((p) => p.url === url);
-  return idx >= 0 && idx < pins.value.length - 1;
 }
 
 function onFaviconError(e: Event) {
@@ -139,21 +102,9 @@ function onFaviconError(e: Event) {
             <img class="favicon-big" :src="favicon(s.url, 32)" alt="" @error="onFaviconError" />
             <span class="letter" style="display: none">{{ (s.title || '?').charAt(0).toUpperCase() }}</span>
           </span>
-          <input
-            v-if="editingId === s.url"
-            v-model="editingTitle"
-            class="ql-edit-input"
-            @click.prevent
-            @keydown.enter.prevent="saveEdit(s.url)"
-            @keydown.esc.prevent="editingId = null"
-            @blur="saveEdit(s.url)"
-          />
-          <span v-else class="ql-name" :title="s.title" @click.prevent="startEdit(s.url, s.title)">{{ s.title }}</span>
+          <span class="ql-name" :title="s.title">{{ s.title }}</span>
           <span class="ql-tile-actions" @click.prevent>
-            <button v-if="canMoveLeft(s.url)" class="ql-tile-action" title="左移" @click="moveTile(s.url, -1)">◀</button>
-            <button v-if="canMoveRight(s.url)" class="ql-tile-action" title="右移" @click="moveTile(s.url, 1)">▶</button>
-            <button class="ql-tile-action" title="编辑名称" @click="startEdit(s.url, s.title)">✎</button>
-            <button v-if="pinFor(s.url)" class="ql-tile-action" title="移除固定" @click="removePin(pinFor(s.url)?.id ?? '')">✕</button>
+            <button class="ql-tile-action" title="移除（可在设置中恢复）" @click="removeTile(s.url)">✕</button>
           </span>
         </a>
       </TransitionGroup>

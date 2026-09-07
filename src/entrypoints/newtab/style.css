@@ -675,3 +675,19 @@ input[type="color"] { width: 44px; height: 30px; border: 1px solid var(--line); 
   .hero.solo { padding-top: 12vh; }
   .dock-panel { width: 280px; }
 }
+
+/* ---------- 设置内常用网址管理 ---------- */
+.ql-pin-list { display: flex; flex-direction: column; }
+.ql-pin-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  margin-bottom: 4px;
+  transition: background 0.15s;
+}
+.ql-pin-row:hover { background: rgba(255, 255, 255, 0.07); }
+.ql-pin-row .mini-input { flex: 1; }
+.ql-pin-row .mini:disabled { opacity: 0.25; cursor: default; }
+.pinrow-enter-active, .pinrow-leave-active { transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.pinrow-enter-from, .pinrow-leave-to { opacity: 0; transform: translateY(-4px); }
+.pinrow-move { transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }

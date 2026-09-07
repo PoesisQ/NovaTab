@@ -9,6 +9,7 @@ import type { SearchEngineId, SearchOpenMode, WallpaperFit } from '../types/sett
 import { ENGINES } from '../core/search';
 import { clearSearchHistory } from '../core/searchHistory';
 import { getRootFolders, type BmRoot } from '../core/bookmarkRoots';
+import { favicon } from '../core/utils';
 import { toast } from '../core/toast';
 
 const props = defineProps<{ open: boolean }>();
@@ -215,6 +216,50 @@ function clearHistory() {
   clearSearchHistory();
   toast('已清空搜索历史');
 }
+
+// ---- 常用网址管理（排序 / 改名 / 移除 / 恢复 / 添加） ----
+const addQlTitle = ref('');
+const addQlUrl = ref('');
+
+function movePin(id: string, dir: -1 | 1) {
+  const arr = settings.quickLinks.pins;
+  const i = arr.findIndex((p) => p.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= arr.length) return;
+  const tmp = arr[i];
+  arr[i] = arr[j];
+  arr[j] = tmp;
+}
+
+function removePin(id: string) {
+  const i = settings.quickLinks.pins.findIndex((p) => p.id === id);
+  if (i < 0) return;
+  const [p] = settings.quickLinks.pins.splice(i, 1);
+  if (!settings.quickLinks.hidden.some((h) => h.url === p.url)) {
+    settings.quickLinks.hidden.push({ url: p.url, title: p.title });
+  }
+}
+
+function restoreHidden(url: string) {
+  const i = settings.quickLinks.hidden.findIndex((h) => h.url === url);
+  if (i < 0) return;
+  const [h] = settings.quickLinks.hidden.splice(i, 1);
+  settings.quickLinks.pins.push({ id: crypto.randomUUID(), title: h.title, url: h.url });
+}
+
+function addPin() {
+  const title = addQlTitle.value.trim();
+  let url = addQlUrl.value.trim();
+  if (!title || !url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  settings.quickLinks.pins.push({ id: crypto.randomUUID(), title, url });
+  addQlTitle.value = '';
+  addQlUrl.value = '';
+}
+
+function onFaviconError(e: Event) {
+  (e.target as HTMLImageElement).style.display = 'none';
+}
 </script>
 
 <template>
@@ -367,6 +412,35 @@ function clearHistory() {
 
               <!-- 常用网址 -->
               <template v-else-if="f.id === 'quicklinks'">
+                <label class="row">固定项排序与编辑</label>
+                <div class="cr-desc">点击名称直接改名；↑ ↓ 调序；✕ 移除（可恢复）</div>
+
+                <TransitionGroup name="pinrow" tag="div" class="ql-pin-list">
+                  <div v-for="(p, i) in settings.quickLinks.pins" :key="p.id" class="ql-pin-row">
+                    <img class="favicon" :src="favicon(p.url, 32)" alt="" @error="onFaviconError" />
+                    <input v-model="p.title" class="mini-input" placeholder="名称" />
+                    <button class="mini" title="上移" :disabled="i === 0" @click="movePin(p.id, -1)">↑</button>
+                    <button class="mini" title="下移" :disabled="i === settings.quickLinks.pins.length - 1" @click="movePin(p.id, 1)">↓</button>
+                    <button class="mini" title="移除" @click="removePin(p.id)">✕</button>
+                  </div>
+                </TransitionGroup>
+                <div v-if="!settings.quickLinks.pins.length" class="hint">暂无固定项——可在页面常用网址上点 ✕ 隐藏不想要的，再在这里恢复需要固定的</div>
+
+                <form class="add-form" style="margin-top: 6px" @submit.prevent="addPin">
+                  <input v-model="addQlTitle" class="mini-input" placeholder="名称" />
+                  <input v-model="addQlUrl" class="mini-input" placeholder="https://…" />
+                  <button type="submit" class="chip">添加</button>
+                </form>
+
+                <template v-if="settings.quickLinks.hidden.length">
+                  <label class="row">已隐藏的网址</label>
+                  <div v-for="h in settings.quickLinks.hidden" :key="h.url" class="ql-pin-row">
+                    <img class="favicon" :src="favicon(h.url, 32)" alt="" @error="onFaviconError" />
+                    <span class="bm-title">{{ h.title }}</span>
+                    <button class="chip" @click="restoreHidden(h.url)">恢复</button>
+                  </div>
+                </template>
+
                 <label class="row">最大条数 <span class="val">{{ settings.quickLinks.maxItems }}</span></label>
                 <input type="range" min="4" max="24" step="1" v-model.number="settings.quickLinks.maxItems" />
               </template>
