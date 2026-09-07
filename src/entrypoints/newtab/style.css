@@ -691,3 +691,15 @@ input[type="color"] { width: 44px; height: 30px; border: 1px solid var(--line); 
 .pinrow-enter-active, .pinrow-leave-active { transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .pinrow-enter-from, .pinrow-leave-to { opacity: 0; transform: translateY(-4px); }
 .pinrow-move { transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* ---------- 拖拽排序 ---------- */
+.ql-drag-handle { cursor: grab; color: var(--text-dim); font-size: 12px; letter-spacing: -1px; padding: 2px 4px; flex: none; }
+.ql-drag-handle:active { cursor: grabbing; }
+.ql-pin-row.drag-over { background: rgb(10 132 255 / 0.18); }
+.ql-pin-row.dragging { opacity: 0.4; }
+.ql-tile.drag-over .ql-tile-ico {
+  transform: scale(1.12) translateY(-2px);
+  border-color: rgb(10 132 255 / 0.7);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 0 3px rgb(10 132 255 / 0.25);
+}
+.ql-tile.dragging { opacity: 0.4; }

@@ -260,6 +260,47 @@ function addPin() {
 function onFaviconError(e: Event) {
   (e.target as HTMLImageElement).style.display = 'none';
 }
+
+// ---- 常用网址拖拽排序 ----
+const dragUrl = ref<string | null>(null);
+const dragOverUrl = ref<string | null>(null);
+
+function onDragStart(e: DragEvent, url: string) {
+  dragUrl.value = url;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', url);
+  }
+}
+
+function onDragEnd() {
+  dragUrl.value = null;
+  dragOverUrl.value = null;
+}
+
+function onRowDragOver(e: DragEvent, url: string) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  dragOverUrl.value = url;
+}
+
+function clearDragOver() {
+  dragOverUrl.value = null;
+}
+
+function onDrop(e: DragEvent, targetUrl: string) {
+  e.preventDefault();
+  const src = dragUrl.value ?? e.dataTransfer?.getData('text/plain');
+  dragUrl.value = null;
+  dragOverUrl.value = null;
+  if (!src || src === targetUrl) return;
+  const arr = settings.quickLinks.pins;
+  const from = arr.findIndex((p) => p.url === src);
+  const to = arr.findIndex((p) => p.url === targetUrl);
+  if (from < 0 || to < 0) return;
+  const [item] = arr.splice(from, 1);
+  arr.splice(to, 0, item);
+}
 </script>
 
 <template>
@@ -413,10 +454,25 @@ function onFaviconError(e: Event) {
               <!-- 常用网址 -->
               <template v-else-if="f.id === 'quicklinks'">
                 <label class="row">固定项排序与编辑</label>
-                <div class="cr-desc">点击名称直接改名；↑ ↓ 调序；✕ 移除（可恢复）</div>
+                <div class="cr-desc">拖动 ⋮⋮ 手柄直接排序（或 ↑ ↓）；点击名称改名；✕ 移除（可恢复）</div>
 
                 <TransitionGroup name="pinrow" tag="div" class="ql-pin-list">
-                  <div v-for="(p, i) in settings.quickLinks.pins" :key="p.id" class="ql-pin-row">
+                  <div
+                    v-for="(p, i) in settings.quickLinks.pins"
+                    :key="p.id"
+                    class="ql-pin-row"
+                    :class="{ 'drag-over': dragOverUrl === p.url, dragging: dragUrl === p.url }"
+                    @dragover.prevent="onRowDragOver($event, p.url)"
+                    @dragleave="clearDragOver"
+                    @drop="onDrop($event, p.url)"
+                  >
+                    <span
+                      class="ql-drag-handle"
+                      title="拖动排序"
+                      draggable="true"
+                      @dragstart="onDragStart($event, p.url)"
+                      @dragend="onDragEnd"
+                    >⋮⋮</span>
                     <img class="favicon" :src="favicon(p.url, 32)" alt="" @error="onFaviconError" />
                     <input v-model="p.title" class="mini-input" placeholder="名称" />
                     <button class="mini" title="上移" :disabled="i === 0" @click="movePin(p.id, -1)">↑</button>
