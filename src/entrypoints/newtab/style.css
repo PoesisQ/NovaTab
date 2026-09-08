@@ -371,7 +371,7 @@ a.bm-item:hover, a.ql-item:hover, button.bm-item:hover { background: var(--surfa
 .ql-bar { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(720px, 94vw); margin: 0 auto; }
 .ql-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
 .ql-tile {
-  width: 88px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 96px; display: flex; flex-direction: column; align-items: center; gap: 6px;
   background: none; border: none; text-decoration: none; cursor: pointer; position: relative;
 }
 .ql-tile-ico {
@@ -396,7 +396,7 @@ a.bm-item:hover, a.ql-item:hover, button.bm-item:hover { background: var(--surfa
   display: inline-flex; align-items: center; justify-content: center;
 }
 .ql-name {
-  max-width: 88px; font-size: 12.5px; color: var(--text);
+  max-width: 96px; font-size: 14px; color: var(--text);
   font-family: var(--font-cn); cursor: pointer;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
@@ -404,7 +404,7 @@ a.bm-item:hover, a.ql-item:hover, button.bm-item:hover { background: var(--surfa
 }
 .ql-tile:hover .ql-name { color: #ffffff; }
 .ql-edit-input {
-  width: 88px; font-size: 12px; text-align: center;
+  width: 96px; font-size: 13px; text-align: center;
   background: var(--surface-deep); color: var(--text);
   border: 1px solid var(--line); border-radius: 6px;
   padding: 3px 4px; outline: none; font-family: inherit;

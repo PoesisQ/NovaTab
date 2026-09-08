@@ -2,7 +2,7 @@
   "name": "novatab",
   "description": "统一、可定制、纯本地的新建标签页（Chrome / Edge）",
   "private": true,
-  "version": "0.6.7",
+  "version": "0.6.8",
   "type": "module",
   "scripts": {
     "dev": "wxt",
