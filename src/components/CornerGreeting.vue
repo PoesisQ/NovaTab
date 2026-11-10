@@ -3,8 +3,12 @@ import { computed } from 'vue';
 import { settings } from '../core/storage';
 
 const text = computed(() => settings.greeting.text.trim());
+const style = computed(() => ({
+  color: settings.greeting.color,
+  opacity: settings.greeting.opacity
+}));
 </script>
 
 <template>
-  <div v-if="text" class="corner-greeting" :title="text">{{ text }}</div>
+  <div v-if="text" class="corner-greeting" :style="style" :title="text">{{ text }}</div>
 </template>

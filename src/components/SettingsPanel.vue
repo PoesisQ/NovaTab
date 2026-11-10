@@ -102,6 +102,7 @@ const saturationPct = pct(() => settings.wallpaper.saturation, (v) => (settings.
 const vignettePct = pct(() => settings.wallpaper.vignette, (v) => (settings.wallpaper.vignette = v));
 const grainPct = pct(() => settings.wallpaper.grain, (v) => (settings.wallpaper.grain = v));
 const dimPct = pct(() => settings.wallpaper.dim, (v) => (settings.wallpaper.dim = v));
+const greetingOpacityPct = pct(() => settings.greeting.opacity, (v) => (settings.greeting.opacity = v));
 
 async function toggleFeature(f: FeatureDef) {
   if (settings.features[f.id]) {
@@ -156,6 +157,13 @@ async function onWpFile(e: Event) {
   } catch {
     toast('壁纸处理失败');
   }
+}
+
+function resetWallpaperPosition() {
+  settings.wallpaper.zoom = 1;
+  settings.wallpaper.posX = 50;
+  settings.wallpaper.posY = 50;
+  toast('壁纸已重置到正中');
 }
 
 function removeImage() {
@@ -389,6 +397,10 @@ function onDrop(e: DragEvent, _targetUrl: string) {
                 <label class="row">垂直位置 <span class="val">{{ settings.wallpaper.posY }}</span></label>
                 <input type="range" min="0" max="100" step="1" v-model.number="settings.wallpaper.posY" />
 
+                <div class="btn-row" style="margin-top: 8px">
+                  <button class="chip" @click="resetWallpaperPosition">↺ 一键重置到正中</button>
+                </div>
+
                 <label class="row">模糊 <span class="val">{{ settings.wallpaper.blur }}px</span></label>
                 <input type="range" min="0" max="40" step="1" v-model.number="settings.wallpaper.blur" />
                 <label class="row">亮度 <span class="val">{{ brightnessPct }}%</span></label>
@@ -409,6 +421,10 @@ function onDrop(e: DragEvent, _targetUrl: string) {
               <template v-else-if="f.id === 'clock'">
                 <input v-model="settings.greeting.text" class="text-input" placeholder="留空则不显示" />
                 <div class="cr-desc">显示在页面左下角，可自由填写</div>
+                <label class="row">文字颜色</label>
+                <input type="color" v-model="settings.greeting.color" />
+                <label class="row">不透明度 <span class="val">{{ greetingOpacityPct }}%</span></label>
+                <input type="range" min="10" max="100" step="5" v-model.number="greetingOpacityPct" />
               </template>
 
               <!-- 搜索 -->

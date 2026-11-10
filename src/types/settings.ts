@@ -76,6 +76,8 @@ export interface TodoSettings {
 
 export interface GreetingSettings {
   text: string;
+  color: string;
+  opacity: number; // 0.1 - 1
 }
 
 export interface HistorySettings {
@@ -122,7 +124,9 @@ export const DEFAULT_SETTINGS: Settings = {
     browserlinks: true
   },
   greeting: {
-    text: '你好，欢迎回来'
+    text: '你好，欢迎回来',
+    color: '#f1f1f4',
+    opacity: 0.75
   },
   wallpaper: {
     mode: 'gradient',
